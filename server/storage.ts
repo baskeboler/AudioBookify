@@ -103,8 +103,8 @@ export class DatabaseStorage implements IStorage {
     return results.map(({ audiobook, progress }) => ({
       ...audiobook,
       listeningProgress: progress ? {
-        currentTime: progress.currentTime,
-        completed: progress.completed,
+        currentTime: progress.currentTime ?? 0,
+        completed: progress.completed ?? false,
       } : undefined,
     }));
   }

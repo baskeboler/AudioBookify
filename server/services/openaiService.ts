@@ -35,8 +35,8 @@ export class OpenAIService {
       fs.writeFileSync(outputPath, buffer);
       
       return outputPath;
-    } catch (error) {
-      throw new Error(`Failed to convert text to speech: ${error.message}`);
+    } catch (error: any) {
+      throw new Error(`Failed to convert text to speech: ${error?.message || 'Unknown error'}`);
     }
   }
 

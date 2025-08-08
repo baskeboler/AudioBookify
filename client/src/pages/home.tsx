@@ -50,12 +50,12 @@ export default function Home() {
     return null; // Will redirect via useEffect
   }
 
-  const totalAudiobooks = audiobooks?.length || 0;
-  const totalDuration = audiobooks?.reduce((acc: number, book: any) => acc + (book.duration || 0), 0) || 0;
-  const hoursListened = audiobooks?.reduce((acc: number, book: any) => {
+  const totalAudiobooks = Array.isArray(audiobooks) ? audiobooks.length : 0;
+  const totalDuration = Array.isArray(audiobooks) ? audiobooks.reduce((acc: number, book: any) => acc + (book.duration || 0), 0) : 0;
+  const hoursListened = Array.isArray(audiobooks) ? audiobooks.reduce((acc: number, book: any) => {
     const progress = book.listeningProgress;
     return acc + (progress ? progress.currentTime : 0);
-  }, 0) || 0;
+  }, 0) : 0;
 
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -73,7 +73,7 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
-            <AudiobookList audiobooks={audiobooks} isLoading={audiobooksLoading} />
+            <AudiobookList audiobooks={Array.isArray(audiobooks) ? audiobooks : []} isLoading={audiobooksLoading} />
           </div>
 
           {/* Sidebar */}
@@ -122,7 +122,7 @@ export default function Home() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {audiobooks && audiobooks.length > 0 ? (
+                {Array.isArray(audiobooks) && audiobooks.length > 0 ? (
                   <div className="space-y-3">
                     {audiobooks.slice(0, 3).map((audiobook: any) => (
                       <div key={audiobook.id} className="flex items-start space-x-3">

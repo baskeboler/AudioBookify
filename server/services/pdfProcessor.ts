@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import pdf from 'pdf-parse';
 
 export interface PDFInfo {
   text: string;
@@ -11,16 +10,17 @@ export interface PDFInfo {
 export class PDFProcessor {
   static async extractText(filePath: string): Promise<PDFInfo> {
     try {
+      const pdf = await import('pdf-parse');
       const dataBuffer = fs.readFileSync(filePath);
-      const data = await pdf(dataBuffer);
+      const data = await pdf.default(dataBuffer);
       
       return {
         text: data.text,
         numPages: data.numpages,
         title: data.info?.Title,
       };
-    } catch (error) {
-      throw new Error(`Failed to extract text from PDF: ${error.message}`);
+    } catch (error: any) {
+      throw new Error(`Failed to extract text from PDF: ${error?.message || 'Unknown error'}`);
     }
   }
 

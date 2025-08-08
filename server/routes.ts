@@ -15,9 +15,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -106,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         audiobook 
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
       if (req.file && fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
@@ -223,11 +221,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     if (user.stripeSubscriptionId) {
       try {
-        const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+        const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
+          expand: ['latest_invoice.payment_intent']
+        });
+        
+        const invoice = subscription.latest_invoice;
+        const paymentIntent = typeof invoice === 'object' && invoice ? (invoice as any).payment_intent : null;
+        const clientSecret = typeof paymentIntent === 'object' && paymentIntent ? (paymentIntent as any).client_secret : null;
         
         res.json({
           subscriptionId: subscription.id,
-          clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+          clientSecret,
         });
         return;
       } catch (error) {
@@ -270,9 +274,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.updateUserStripeInfo(userId, customer.id, subscription.id);
 
+      const invoice = subscription.latest_invoice;
+      const paymentIntent = typeof invoice === 'object' && invoice ? (invoice as any).payment_intent : null;
+      const clientSecret = typeof paymentIntent === 'object' && paymentIntent ? (paymentIntent as any).client_secret : null;
+      
       res.json({
         subscriptionId: subscription.id,
-        clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+        clientSecret,
       });
     } catch (error: any) {
       console.error('Subscription creation error:', error);
@@ -358,7 +366,7 @@ async function processAudiobook(
       videoPath,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Processing error:', error);
     
     await storage.updateAudiobook(audiobookId, {
